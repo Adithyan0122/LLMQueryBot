@@ -1,7 +1,7 @@
 import sqlite3
 
 # Connect to the database
-conn = sqlite3.connect("data/examples.db")
+conn = sqlite3.connect("students.db")
 cur = conn.cursor()
 
 # Check if the table exists

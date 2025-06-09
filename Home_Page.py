@@ -26,6 +26,7 @@ if uploaded_file:
             conn = sqlite3.connect("students.db")
             cursor = conn.cursor()
 
+            # Create table if not exists
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS students (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,6 +39,9 @@ if uploaded_file:
                     specialization TEXT
                 )
             ''')
+
+            # ❗ Delete all existing records before inserting new ones
+            cursor.execute('DELETE FROM students')
 
             inserted = 0
             for index, row in df.iterrows():
