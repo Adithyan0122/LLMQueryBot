@@ -84,6 +84,17 @@ def read_sql_query(sql, db):
         conn.close()
     return rows, column_names
 
+# ---------------- Validate SQL ----------------
+def validate_sql_query(sql, db_path="students.db"):
+    try:
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        cur.execute(f"EXPLAIN QUERY PLAN {sql}")
+        conn.close()
+        return True, ""
+    except sqlite3.Error as e:
+        return False, str(e)
+
 # ---------------- RAG: Get Similar Examples ----------------
 def get_similar_examples(question):
     conn = sqlite3.connect("data/examples.db")
@@ -133,13 +144,16 @@ if submit and question.strip():
         st.warning("⚠️ The generated query is a write operation and requires admin authentication.")
         st.session_state["awaiting_password"] = True
     else:
-        # Read-only, execute directly
-        result, column_names = read_sql_query(sql_query, "students.db")
-        st.session_state["last_result"] = result.copy()
-        st.session_state["last_columns"] = column_names
-        st.session_state["current_page"] = 1
-        st.session_state["awaiting_password"] = False
-
+        # Read-only, validate then execute
+        is_valid, error_msg = validate_sql_query(sql_query, "students.db")
+        if is_valid:
+            result, column_names = read_sql_query(sql_query, "students.db")
+            st.session_state["last_result"] = result.copy()
+            st.session_state["last_columns"] = column_names
+            st.session_state["current_page"] = 1
+            st.session_state["awaiting_password"] = False
+        else:
+            st.error(f"❌ SQL validation failed: {error_msg}")
 
 # ---------------- Admin Password Handling ----------------
 if st.session_state.get("awaiting_password", False) and not st.session_state.get("password_verified", False):
@@ -149,13 +163,17 @@ if st.session_state.get("awaiting_password", False) and not st.session_state.get
         if admin_pass_input == ADMIN_PASSWORD:
             st.success("Admin authentication successful. Query executed.")
             sql_query = st.session_state["last_sql_query"]
-            result, column_names = read_sql_query(sql_query, "students.db")
 
-            st.session_state["last_result"] = result.copy()
-            st.session_state["last_columns"] = column_names
-            st.session_state["current_page"] = 1
-            st.session_state["password_verified"] = True
-            st.session_state["awaiting_password"] = False
+            is_valid, error_msg = validate_sql_query(sql_query)
+            if is_valid:
+                result, column_names = read_sql_query(sql_query, "students.db")
+                st.session_state["last_result"] = result.copy()
+                st.session_state["last_columns"] = column_names
+                st.session_state["current_page"] = 1
+                st.session_state["password_verified"] = True
+                st.session_state["awaiting_password"] = False
+            else:
+                st.error(f"❌ SQL validation failed: {error_msg}")
         else:
             st.error("❌ Incorrect admin password. Query execution blocked.")
 
