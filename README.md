@@ -8,7 +8,7 @@
 
 ## Architecture
 
-![Architecture](architecture/architecture.png.png)
+![Architecture](architecture/architecture.png)
 
 
 ## Features
