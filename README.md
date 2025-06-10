@@ -6,6 +6,11 @@
 
 ---
 
+## Architecture
+
+![Architecture](architecture/architecture.png.png)
+
+
 ## Features
 
 - **Natural Language to SQL**: Ask questions in plain English; the app translates them into SQL queries.
